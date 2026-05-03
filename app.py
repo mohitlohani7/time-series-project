@@ -2,8 +2,8 @@
 🚀 TimeSeries Pro - Main Streamlit Application
 Multi-Segment Time Series Forecasting Platform
 """
+
 import streamlit as st
-import os
 
 # --- Page Config ---
 st.set_page_config(
@@ -13,34 +13,32 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for styling
+# --- DEBUG (IMPORTANT) ---
+st.write("✅ App Loaded Successfully")
+
+# --- Custom CSS ---
 st.markdown("""
 <style>
-    /* Dark theme specific adjustments */
     .stApp {
         background-color: #0E1117;
     }
     header {
         background-color: transparent !important;
     }
-    .css-1d391kg {
-        background-color: #1A1F2E;
-    }
-    /* Hide top padding */
     .block-container {
         padding-top: 2rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Import settings
+# --- Import settings ---
 try:
     from config.settings import APP_TITLE, APP_SUBTITLE, SEGMENTS
 except ImportError:
-    st.error("Missing configuration. Please check project structure.")
+    st.error("❌ Missing configuration. Please check project structure.")
     st.stop()
 
-# --- Sidebar Navigation ---
+# --- Sidebar ---
 with st.sidebar:
     st.markdown(f"## {APP_TITLE}")
     st.markdown(f"*{APP_SUBTITLE}*")
@@ -65,8 +63,14 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+# --- Main UI ---
+st.title("⏱️ TimeSeries Pro")
+st.write(f"Selected Segment: **{selected_segment}**")
+
 # --- Routing ---
 segment_module_name = SEGMENTS[selected_segment]
+
+module = None
 
 try:
     if segment_module_name == "stock_market":
@@ -81,13 +85,22 @@ try:
         import segments.custom_csv as module
     else:
         st.error(f"Segment '{segment_module_name}' not implemented yet.")
-        module = None
 
-    if module and hasattr(module, 'render'):
-        module.render()
-        
 except ImportError as e:
-    st.error(f"Failed to load segment: {e}")
-except Exception as e:
-    st.error(f"An error occurred: {e}")
+    st.error(f"❌ Failed to load segment: {e}")
 
+# --- CONTROLLED EXECUTION (KEY FIX) ---
+if module and hasattr(module, 'render'):
+    
+    st.markdown("### ▶️ Run Analysis")
+
+    if st.button("🚀 Run Selected Segment"):
+        try:
+            with st.spinner("Processing... Please wait ⏳"):
+                module.render()
+                
+        except Exception as e:
+            st.error(f"❌ Error occurred: {e}")
+
+else:
+    st.warning("⚠️ Module not ready or missing render() function")
